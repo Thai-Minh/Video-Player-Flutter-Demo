@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:helloworld/custom/slider_thumb_image.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -19,8 +22,24 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   String duration = '';
   bool validPosition = false;
 
+  ui.Image? customImage;
+
+  Future<ui.Image> load(String asset) async {
+    ByteData data = await rootBundle.load(asset);
+    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+    ui.FrameInfo fi = await codec.getNextFrame();
+    return fi.image;
+  }
+
   @override
   void initState() {
+
+    load('assets/images/twitter.png').then((image) {
+      setState(() {
+        customImage = image;
+      });
+    });
+
     super.initState();
 
     _controller = VideoPlayerController.network(
@@ -48,7 +67,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       }
       validPosition = oDuration.compareTo(oPosition) >= 0;
       sliderValue = validPosition ? oPosition.inSeconds.toDouble() : 0;
-      print("sliderValue: $sliderValue --- ${ _controller.value.duration.inSeconds.toDouble()}");
       setState(() {});
     }
   }
@@ -70,10 +88,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             return Container(
-                color: Colors.red,
-                child: Column(children: <Widget>[
+              color: Colors.red,
+              child: Column(children: <Widget>[
                 AspectRatio(
-                aspectRatio: _controller.value.aspectRatio,
+                    aspectRatio: _controller.value.aspectRatio,
                     child: VideoPlayer(_controller)),
                 Column(children: [
                   SliderTheme(
@@ -82,7 +100,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       inactiveTrackColor: Colors.red[100],
                       trackShape: const RoundedRectSliderTrackShape(),
                       trackHeight: 4.0,
-                      thumbShape: const RoundSliderThumbShape(
+                      thumbShape:  const RoundSliderThumbShape(
                           enabledThumbRadius: 12.0),
                       thumbColor: Colors.redAccent,
                       overlayColor: Colors.red.withAlpha(32),
@@ -91,8 +109,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       tickMarkShape: const RoundSliderTickMarkShape(),
                       activeTickMarkColor: Colors.red[700],
                       inactiveTickMarkColor: Colors.red[100],
-                      valueIndicatorShape:
-                      const PaddleSliderValueIndicatorShape(),
+                      // valueIndicatorShape: const PaddleSliderValueIndicatorShape(),
+                      valueIndicatorShape: SliderThumbImage(customImage),
                       valueIndicatorColor: Colors.redAccent,
                       valueIndicatorTextStyle: const TextStyle(
                         color: Colors.white,
@@ -103,17 +121,18 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       min: 0.0,
                       max: (!validPosition && _controller.value.duration == null) ? 1.0 : _controller.value.duration.inSeconds.toDouble(),
                       label: position,
+                      divisions: _controller.value.duration.inSeconds,
                       onChanged:
                       validPosition ? _onSliderPositionChanged : null,
                     ),
                   ),
                 ])
-                ]),
-          );
+              ]),
+            );
           } else {
-          return const Center(
-          child: CircularProgressIndicator(),
-          );
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
           }
         },
       ),
@@ -138,7 +157,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     setState(() {
       sliderValue = progress.floor().toDouble();
     });
-    //convert to Milliseconds since VLC requires MS to set time
     setTime(sliderValue.toInt() * 1000);
   }
 
