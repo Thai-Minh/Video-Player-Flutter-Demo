@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:helloworld/custom/player_slider.dart';
+import 'package:helloworld/custom/player_indicator_shape.dart';
 import 'package:video_player/video_player.dart';
 
 import 'custom/player_path_painter.dart';
@@ -28,10 +28,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   ui.Image? customImage1;
   ui.Image? customImage2;
 
-  PlayerIndicatorShape player = const PlayerIndicatorShape();
+  PlayerIndicatorShape indicatorShape = const PlayerIndicatorShape();
 
   var widgetKey = GlobalKey();
-  var _widgetSize = Size(-1, -1);
 
   Future<ui.Image> load(String asset) async {
     ByteData data = await rootBundle.load(asset);
@@ -93,14 +92,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext? context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      var currSize = widgetKey.currentContext!.size!;
-      if (currSize.width != _widgetSize.width ||
-          currSize.height != _widgetSize.height) {
-        _widgetSize = currSize;
-      }
-    });
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Video'),
@@ -110,49 +101,56 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             return Container(
+              alignment: Alignment.topCenter,
               color: Colors.black,
-              child: Column(children: <Widget>[
+              child: Stack(children: <Widget>[
                 AspectRatio(
                     aspectRatio: _controller.value.aspectRatio,
                     child: VideoPlayer(_controller)),
-                Column(
-                    key: widgetKey,
-                    children: [
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: Colors.blue[700],
-                      inactiveTrackColor: Colors.blue[100],
-                      trackShape: const RoundedRectSliderTrackShape(),
-                      trackHeight: 4.0,
-                      thumbShape:
-                          const RoundSliderThumbShape(enabledThumbRadius: 12.0),
-                      thumbColor: Colors.blueAccent,
-                      overlayColor: Colors.red.withAlpha(32),
-                      overlayShape:
-                          const RoundSliderOverlayShape(overlayRadius: 28.0),
-                      tickMarkShape: const RoundSliderTickMarkShape(),
-                      activeTickMarkColor: Colors.blue[700],
-                      inactiveTickMarkColor: Colors.blue[100],
-                      valueIndicatorColor: Colors.red,
-                      valueIndicatorTextStyle: const TextStyle(
-                        color: Colors.white,
+                Positioned.fill(
+                    child: Stack(
+                  children: [
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: Colors.blue[700],
+                          inactiveTrackColor: Colors.blue[100],
+                          trackHeight: 4.0,
+                          thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 0.0),
+                          thumbColor: Colors.blueAccent,
+                          overlayColor: Colors.blueAccent,
+                          overlayShape:
+                              const RoundSliderOverlayShape(overlayRadius: 6.0),
+                          tickMarkShape: const RoundSliderTickMarkShape(),
+                          activeTickMarkColor: Colors.blue[700],
+                          inactiveTickMarkColor: Colors.blue[100],
+                          valueIndicatorTextStyle: const TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                        child: PlayerSlider(
+                          value: sliderValue,
+                          min: 0.0,
+                          max: (!validPosition)
+                              ? 1.0
+                              : _controller.value.duration.inSeconds.toDouble(),
+                          label: position,
+                          divisions: _controller.value.duration.inSeconds,
+                          onChanged:
+                              validPosition ? _onSliderPositionChanged : null,
+                          image: sliderValue % 20 == 0
+                              ? customImage2
+                              : customImage1,
+                          indicatorShape: indicatorShape,
+                        ),
                       ),
-                    ),
-                    child: PlayerSlider(
-                      value: sliderValue,
-                      min: 0.0,
-                      max: (!validPosition)
-                          ? 1.0
-                          : _controller.value.duration.inSeconds.toDouble(),
-                      label: position,
-                      divisions: _controller.value.duration.inSeconds,
-                      onChanged:
-                          validPosition ? _onSliderPositionChanged : null,
-                      image: sliderValue % 20 == 0 ? customImage2 : customImage1,
-                      player: player,
-                    ),
-                  ),
-                ])
+                    )
+                  ],
+                ))
               ]),
             );
           } else {
