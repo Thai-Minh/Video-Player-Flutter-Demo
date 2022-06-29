@@ -41,13 +41,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   void initState() {
-    load('assets/images/twitter.png').then((image) {
+    load('assets/images/ratio169.png').then((image) {
       setState(() {
         customImage1 = image;
       });
     });
 
-    load('assets/images/google.png').then((image) {
+    load('assets/images/dog.png').then((image) {
       setState(() {
         customImage2 = image;
       });
@@ -116,11 +116,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       right: 0,
                       child: SliderTheme(
                         data: SliderTheme.of(context).copyWith(
+                          trackShape: const RectangularSliderTrackShape(),
                           activeTrackColor: Colors.blue[700],
                           inactiveTrackColor: Colors.blue[100],
                           trackHeight: 4.0,
-                          thumbShape: const RoundSliderThumbShape(
-                              enabledThumbRadius: 0.0),
+                          thumbShape: SliderComponentShape.noOverlay,
                           thumbColor: Colors.blueAccent,
                           overlayColor: Colors.blueAccent,
                           overlayShape:

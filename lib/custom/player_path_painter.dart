@@ -6,28 +6,23 @@ import 'package:flutter/material.dart';
 class PlayerIndicatorShape {
   const PlayerIndicatorShape();
 
+  static const double _overloadPadding = 10;
+
   static const double _topLobeRadius = 16.0;
-
-  static const double _bottomLobeRadius = 10.0;
   static const double _labelPadding = 8.0;
-  static const double _distanceBetweenTopBottomCenters = 60.0;
-  static const double _middleNeckWidth = 3.0;
-  static const double _bottomNeckRadius = 4.5;
+  static const double _distanceBetweenTopBottomCenters = 80.0;
 
-  static const double _rightBottomNeckCenterX =
-      _middleNeckWidth / 2 + _bottomNeckRadius;
   static const Offset _topLobeCenter =
       Offset(0.0, -_distanceBetweenTopBottomCenters);
 
   // preview
   static const double _previewRatio = 16 / 9;
-  static const double _previewWidth = 100.0;
+  static const double _previewWidth = 130.0;
   static const double _previewHeight = _previewWidth / _previewRatio;
 
   static void _addRect(Path path, Offset center) {
-    final Rect rect =
-        Rect.fromLTWH(center.dx - _previewWidth / 2, center.dy - _previewHeight / 2, _previewWidth, _previewHeight);
-
+    final Rect rect = Rect.fromLTWH(center.dx - _previewWidth / 2,
+        center.dy - _previewHeight / 2, _previewWidth, _previewHeight);
     path.addRect(rect);
   }
 
@@ -77,6 +72,9 @@ class PlayerIndicatorShape {
     double textScaleFactor,
     Size sizeWithOverflow,
   ) {
+    double width =
+        MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.width;
+
     if (scale == 0.0) {
       return;
     }
@@ -88,63 +86,57 @@ class PlayerIndicatorShape {
     final double labelHalfWidth = labelText.width / 2.0;
 
     canvas.save();
-    canvas.translate(center.dx, center.dy);
     canvas.scale(overallScale, overallScale);
 
-    final double bottomNeckTriangleHypotenuse =
-        _bottomNeckRadius + _bottomLobeRadius / overallScale;
-    final double rightBottomNeckCenterY = -math.sqrt(
-        math.pow(bottomNeckTriangleHypotenuse, 2) -
-            math.pow(_rightBottomNeckCenterX, 2));
+    // check preview overload screen
+    if ((center.dx + _previewWidth / 2) > width) {
+      canvas.translate(width - _previewWidth / 2 - _overloadPadding, center.dy);
+    } else if ((center.dx - _previewWidth / 2) < 0) {
+      canvas.translate(_previewWidth / 2 + _overloadPadding, center.dy);
+    } else {
+      canvas.translate(center.dx, center.dy);
+    }
 
-    final Path path = Path()
-      ..moveTo(_middleNeckWidth / 2, rightBottomNeckCenterY);
-
+    final Path path = Path();
     final double halfWidthNeeded = math.max(
       0.0,
       inverseTextScale * labelHalfWidth - (_topLobeRadius - _labelPadding),
     );
-
     final double shift = _getIdealOffset(
         halfWidthNeeded, overallScale, center, sizeWithOverflow.width);
-    final double rightWidthNeeded = halfWidthNeeded + shift;
 
-    print("MTHAI 1: $_topLobeCenter --- ${Offset(rightWidthNeeded, 0.0)}");
-
-    _addRect(
-        path, _topLobeCenter + Offset(rightWidthNeeded, 0.0));
-
+    _addRect(path, _topLobeCenter);
     canvas.drawPath(path, paint);
 
-    canvas.save();
-    canvas.translate(shift, -_distanceBetweenTopBottomCenters);
-    canvas.scale(inverseTextScale, inverseTextScale);
-
+    //canvas image preview
     if (labelImage != null) {
       var imgAspect = labelImage.width / labelImage.height;
       var scale = _previewRatio > imgAspect
           ? (_previewHeight / labelImage.height)
           : (_previewWidth / labelImage.width);
 
-      var left = (_previewWidth - labelImage.width * scale) / 2;
-      var top = (_previewHeight - labelImage.height * scale) / 2;
-      var right = left + (labelImage.width * scale);
-      var bottom = top + (labelImage.height * scale);
-      var imageRect = Offset(left, top) & Size(right - left, bottom - top);
+      var imageRect2 = Rect.fromLTWH(
+          _topLobeCenter.dx - (labelImage.width * scale) / 2,
+          _topLobeCenter.dy - _previewHeight / 2,
+          labelImage.width * scale,
+          labelImage.height * scale);
 
-      canvas.drawImage(labelImage,
-          Offset.zero - Offset(labelHalfWidth, labelImage.height / 2.0), paint);
-
-      // canvas.drawImageRect(
-      //     labelImage,
-      //     Offset.zero - Offset(labelHalfWidth, labelImage.height / 2.0) &
-      //         Size(labelImage.width * 1.0, labelImage.height * 1.0),
-      //     imageRect,
-      //     paint);
+      canvas.drawImageRect(
+          labelImage,
+          Offset.zero & Size(labelImage.width * 1.0, labelImage.height * 1.0),
+          imageRect2,
+          paint);
     }
 
+    canvas.save();
+    canvas.translate(0, -_distanceBetweenTopBottomCenters);
+    canvas.scale(inverseTextScale, inverseTextScale);
+
     labelText.paint(
-        canvas, Offset.zero - Offset(labelHalfWidth, - _distanceBetweenTopBottomCenters / 2.0));
+        canvas,
+        Offset.zero -
+            Offset(labelHalfWidth, -_distanceBetweenTopBottomCenters / 2.0));
+    canvas.restore();
     canvas.restore();
   }
 }
