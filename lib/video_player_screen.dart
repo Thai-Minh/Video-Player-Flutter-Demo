@@ -10,6 +10,8 @@ import 'package:wakelock/wakelock.dart';
 import 'advanced_overlay_widget.dart';
 import 'custom/player_path_painter.dart';
 
+const double videoRatio = 16 / 9;
+
 class VideoPlayerScreen extends StatefulWidget {
   const VideoPlayerScreen({super.key});
 
@@ -26,8 +28,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   String duration = '';
   bool validPosition = false;
 
+  bool isDragging = false;
+
+  Offset centerValue = Offset(0.0, 0.0);
+
   ui.Image? customImage1;
-  ui.Image? customImage2;
 
   PlayerIndicatorShape indicatorShape = const PlayerIndicatorShape();
 
@@ -40,12 +45,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     load('assets/images/ratio169.png').then((image) {
       setState(() {
         customImage1 = image;
-      });
-    });
-
-    load('assets/images/dog.png').then((image) {
-      setState(() {
-        customImage2 = image;
       });
     });
 
@@ -82,12 +81,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       var cDuration = _controller.value.duration;
       if (cDuration.inHours == 0) {
         var strPosition = cPosition.toString().split('.')[0];
-        var strDuration = cDuration.toString().split('.')[0];
         position = "${strPosition.split(':')[1]}:${strPosition.split(':')[2]}";
-        duration = "${strDuration.split(':')[1]}:${strDuration.split(':')[2]}";
       } else {
         position = cPosition.toString().split('.')[0];
-        duration = cDuration.toString().split('.')[0];
       }
       validPosition = cDuration.compareTo(cPosition) >= 0;
       sliderValue = validPosition ? cPosition.inSeconds.toDouble() : 0;
@@ -96,11 +92,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   void setOrientation(bool isPortrait) {
-    print("MTHAI 2: $isPortrait");
-
     if (isPortrait) {
       Wakelock.disable();
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+          overlays: SystemUiOverlay.values);
     } else {
       Wakelock.enable();
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
@@ -136,27 +131,34 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 builder: (context, orientation) {
                   final isPortrait = orientation == Orientation.portrait;
 
-                  print("MTHAI 1: $isPortrait");
-
                   setOrientation(isPortrait);
 
                   return Stack(
                       fit: isPortrait ? StackFit.loose : StackFit.expand,
                       children: <Widget>[
                         buildVideoPlayer(),
+                        buildPreviewFrame(context),
                         Positioned.fill(
                           child: AdvancedOverlayWidget(
                             controller: _controller,
                             sliderValue: sliderValue,
                             position: position,
-                            duration: duration,
                             validPosition: validPosition,
                             indicatorShape: indicatorShape,
-                            image: sliderValue % 20 == 0
-                                ? customImage2
-                                : customImage1,
-                            positionChanged: (progress) {
-                              _onSliderPositionChanged(progress);
+                            image: customImage1,
+                            onPositionChanged: _onSliderPositionChanged,
+                            onOffsetChanged: (center) {
+                              if (isDragging) {
+                                centerValue = center;
+                              } else {
+                                centerValue = Offset.zero;
+                              }
+                            },
+                            onDragging: (dragging) {
+                              isDragging = dragging;
+                              if (!dragging) {
+                                centerValue = Offset.zero;
+                              }
                             },
                             onClickedFullScreen: () {
                               target = isPortrait
@@ -197,6 +199,24 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         child: VideoPlayer(_controller));
 
     return buildFullScreen(child: video);
+  }
+
+  Widget buildPreviewFrame(BuildContext context) {
+    var width = MediaQuery.of(context).size.width * 0.3;
+    var height = width / videoRatio;
+
+    print("MTHAI: centerValue: $centerValue");
+    return Container(
+      width: width,
+      height: height,
+      child: Transform.translate(
+          offset: centerValue,
+          child: centerValue != Offset.zero
+              ? Container(
+                  color: Colors.black,
+                  child: Image.asset('assets/images/dog.png'))
+              : Container()),
+    );
   }
 
   Widget buildFullScreen({

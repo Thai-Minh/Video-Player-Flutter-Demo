@@ -14,6 +14,7 @@ class PlayerSlider extends StatefulWidget {
     Key? key,
     required this.value,
     required this.onChanged,
+    required this.onOffsetChange,
     required this.divisions,
     required this.indicatorShape,
     this.label,
@@ -41,6 +42,8 @@ class PlayerSlider extends StatefulWidget {
   final ValueChanged<double>? onChangeStart;
 
   final ValueChanged<double>? onChangeEnd;
+
+  final ValueChanged<Offset>? onOffsetChange;
 
   final double min;
 
@@ -382,6 +385,7 @@ class _SliderState extends State<PlayerSlider> with TickerProviderStateMixin {
                 : null,
             onChangeStart: _handleDragStart,
             onChangeEnd: _handleDragEnd,
+            onOffsetChange: widget.onOffsetChange,
             state: this,
             semanticFormatterCallback: widget.semanticFormatterCallback,
             hasFocus: _focused,
@@ -427,6 +431,7 @@ class _SliderRenderObjectWidget extends LeafRenderObjectWidget {
     required this.onChanged,
     required this.onChangeStart,
     required this.onChangeEnd,
+    required this.onOffsetChange,
     required this.state,
     required this.semanticFormatterCallback,
     required this.hasFocus,
@@ -444,6 +449,7 @@ class _SliderRenderObjectWidget extends LeafRenderObjectWidget {
   final ValueChanged<double>? onChanged;
   final ValueChanged<double>? onChangeStart;
   final ValueChanged<double>? onChangeEnd;
+  final ValueChanged<Offset>? onOffsetChange;
   final SemanticFormatterCallback? semanticFormatterCallback;
   final _SliderState state;
   final bool hasFocus;
@@ -461,6 +467,7 @@ class _SliderRenderObjectWidget extends LeafRenderObjectWidget {
       textScaleFactor: textScaleFactor,
       screenSize: screenSize,
       onChanged: onChanged,
+      onOffsetChange: onOffsetChange,
       onChangeStart: onChangeStart,
       onChangeEnd: onChangeEnd,
       state: state,
@@ -485,6 +492,7 @@ class _SliderRenderObjectWidget extends LeafRenderObjectWidget {
       ..textScaleFactor = textScaleFactor
       ..screenSize = screenSize
       ..onChanged = onChanged
+      ..onOffsetChange = onOffsetChange
       ..onChangeStart = onChangeStart
       ..onChangeEnd = onChangeEnd
       ..textDirection = Directionality.of(context)
@@ -508,6 +516,7 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     required Size screenSize,
     required TargetPlatform platform,
     required ValueChanged<double>? onChanged,
+    required ValueChanged<Offset>? onOffsetChange,
     required SemanticFormatterCallback? semanticFormatterCallback,
     required this.onChangeStart,
     required this.onChangeEnd,
@@ -516,9 +525,7 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     required bool hasFocus,
     required bool hovering,
     required DeviceGestureSettings gestureSettings,
-  })  : assert(value != null && value >= 0.0 && value <= 1.0),
-        assert(state != null),
-        assert(textDirection != null),
+  })  : assert(value >= 0.0 && value <= 1.0),
         _platform = platform,
         _semanticFormatterCallback = semanticFormatterCallback,
         _label = label,
@@ -757,6 +764,7 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     }
   }
 
+  ValueChanged<Offset>? onOffsetChange;
   ValueChanged<double>? onChangeStart;
   ValueChanged<double>? onChangeEnd;
 
@@ -1110,6 +1118,7 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         );
 
         _state.paintValueIndicator = (PaintingContext context, Offset offset) {
+          onOffsetChange!(offset + thumbCenter);
           if (attached) {
             _indicatorShape.paint(
                 context.canvas,

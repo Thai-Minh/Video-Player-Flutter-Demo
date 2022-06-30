@@ -60,13 +60,13 @@ class PlayerIndicatorShape {
     canvas.translate(previewTransX, center.dy);
     canvas.scale(overallScale, overallScale);
 
-    final Path path = Path();
-
-    _addRect(path, _topLobeCenter);
-    canvas.drawPath(path, paint);
-
     //draw image preview
     if (labelImage != null) {
+      final Path path = Path();
+
+      _addRect(path, _topLobeCenter);
+      canvas.drawPath(path, paint);
+
       var imgAspect = labelImage.width / labelImage.height;
       var scale = _previewRatio > imgAspect
           ? (_previewHeight / labelImage.height)

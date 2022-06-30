@@ -12,13 +12,14 @@ class AdvancedOverlayWidget extends StatelessWidget {
 
   final double sliderValue;
   final String position;
-  final String duration;
   final bool validPosition;
   final PlayerIndicatorShape indicatorShape;
 
   final ui.Image? image;
 
-  final ValueChanged<double> positionChanged;
+  final ValueChanged<double> onPositionChanged;
+  final ValueChanged<Offset> onOffsetChanged;
+  final ValueChanged<bool> onDragging;
 
   static const allSpeeds = <double>[0.25, 0.5, 1, 1.5, 2, 3, 5, 10];
 
@@ -27,22 +28,14 @@ class AdvancedOverlayWidget extends StatelessWidget {
     required this.controller,
     required this.sliderValue,
     required this.position,
-    required this.duration,
     required this.validPosition,
     required this.indicatorShape,
     required this.image,
-    required this.positionChanged,
+    required this.onPositionChanged,
+    required this.onOffsetChanged,
+    required this.onDragging,
     required this.onClickedFullScreen,
   }) : super(key: key);
-
-  String getPosition() {
-    final duration = Duration(
-        milliseconds: controller.value.position.inMilliseconds.round());
-
-    return [duration.inMinutes, duration.inSeconds]
-        .map((seg) => seg.remainder(60).toString().padLeft(2, '0'))
-        .join(':');
-  }
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -101,7 +94,16 @@ class AdvancedOverlayWidget extends StatelessWidget {
               : controller.value.duration.inSeconds.toDouble(),
           label: position,
           divisions: controller.value.duration.inSeconds,
-          onChanged: validPosition ? positionChanged : null,
+          onChanged: validPosition ? onPositionChanged : null,
+          onChangeStart: (_) {
+            controller.pause();
+            onDragging(true);
+          },
+          onChangeEnd: (_) {
+            controller.play();
+            onDragging(false);
+          },
+          onOffsetChange: onOffsetChanged,
           image: image,
           indicatorShape: indicatorShape,
         ),
@@ -127,16 +129,18 @@ class AdvancedOverlayWidget extends StatelessWidget {
         ),
       );
 
-  Widget buildPlay() => controller.value.isPlaying
-      ? Container()
-      : Container(
-          color: Colors.black26,
-          child: const Center(
-            child: Icon(
-              Icons.play_arrow,
-              color: Colors.white,
-              size: 70,
+  Widget buildPlay() {
+    return controller.value.isPlaying
+        ? Container()
+        : Container(
+            color: Colors.black26,
+            child: const Center(
+              child: Icon(
+                Icons.play_arrow,
+                color: Colors.white,
+                size: 70,
+              ),
             ),
-          ),
-        );
+          );
+  }
 }

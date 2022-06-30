@@ -19,6 +19,7 @@ INJECTED from /Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/android
 MERGED from /Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/android/app/src/main/AndroidManifest.xml:1:1-35:12
 MERGED from [:video_player] /Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/build/video_player/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-9:12
 MERGED from [:native_device_orientation] /Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/build/native_device_orientation/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-9:12
+MERGED from [:wakelock] /Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/build/wakelock/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-9:12
 MERGED from [androidx.window:window-java:1.0.0-beta04] /Users/thaiminh/.gradle/caches/transforms-3/246793f755122fe14a5802655438cb75/transformed/jetified-window-java-1.0.0-beta04/AndroidManifest.xml:17:1-23:12
 MERGED from [androidx.window:window:1.0.0-beta04] /Users/thaiminh/.gradle/caches/transforms-3/49bc944d29f70d45aa5add8e43e3247e/transformed/jetified-window-1.0.0-beta04/AndroidManifest.xml:17:1-33:12
 MERGED from [com.google.android.exoplayer:exoplayer-hls:2.14.1] /Users/thaiminh/.gradle/caches/transforms-3/a6a57cd67d6d61d1d0c1974aff051345/transformed/jetified-exoplayer-hls-2.14.1/AndroidManifest.xml:17:1-24:12
@@ -73,6 +74,8 @@ MERGED from [:video_player] /Users/thaiminh/Documents/GitHub/Video-Player-Flutte
 MERGED from [:video_player] /Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/build/video_player/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-7:41
 MERGED from [:native_device_orientation] /Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/build/native_device_orientation/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-7:41
 MERGED from [:native_device_orientation] /Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/build/native_device_orientation/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-7:41
+MERGED from [:wakelock] /Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/build/wakelock/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-7:41
+MERGED from [:wakelock] /Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/build/wakelock/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-7:41
 MERGED from [androidx.window:window-java:1.0.0-beta04] /Users/thaiminh/.gradle/caches/transforms-3/246793f755122fe14a5802655438cb75/transformed/jetified-window-java-1.0.0-beta04/AndroidManifest.xml:19:5-21:41
 MERGED from [androidx.window:window-java:1.0.0-beta04] /Users/thaiminh/.gradle/caches/transforms-3/246793f755122fe14a5802655438cb75/transformed/jetified-window-java-1.0.0-beta04/AndroidManifest.xml:19:5-21:41
 MERGED from [androidx.window:window:1.0.0-beta04] /Users/thaiminh/.gradle/caches/transforms-3/49bc944d29f70d45aa5add8e43e3247e/transformed/jetified-window-1.0.0-beta04/AndroidManifest.xml:20:5-22:41
