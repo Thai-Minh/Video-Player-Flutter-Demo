@@ -75,10 +75,20 @@ class PlayerIndicatorShape {
     double width =
         MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.width;
 
+    double previewTransX;
+
     if (scale == 0.0) {
       return;
     }
-    assert(!sizeWithOverflow.isEmpty);
+
+    // check preview overload screen
+    if ((center.dx + _previewWidth / 2) > width) {
+      previewTransX = width - _previewWidth / 2 - _overloadPadding;
+    } else if ((center.dx - _previewWidth / 2) < 0) {
+      previewTransX = _previewWidth / 2 + _overloadPadding;
+    } else {
+      previewTransX = center.dx;
+    }
 
     final double overallScale = scale * textScaleFactor;
     final double inverseTextScale =
@@ -87,15 +97,7 @@ class PlayerIndicatorShape {
 
     canvas.save();
     canvas.scale(overallScale, overallScale);
-
-    // check preview overload screen
-    if ((center.dx + _previewWidth / 2) > width) {
-      canvas.translate(width - _previewWidth / 2 - _overloadPadding, center.dy);
-    } else if ((center.dx - _previewWidth / 2) < 0) {
-      canvas.translate(_previewWidth / 2 + _overloadPadding, center.dy);
-    } else {
-      canvas.translate(center.dx, center.dy);
-    }
+    canvas.translate(previewTransX, center.dy);
 
     final Path path = Path();
     final double halfWidthNeeded = math.max(
@@ -108,7 +110,7 @@ class PlayerIndicatorShape {
     _addRect(path, _topLobeCenter);
     canvas.drawPath(path, paint);
 
-    //canvas image preview
+    //draw image preview
     if (labelImage != null) {
       var imgAspect = labelImage.width / labelImage.height;
       var scale = _previewRatio > imgAspect
@@ -128,10 +130,11 @@ class PlayerIndicatorShape {
           paint);
     }
 
-    canvas.save();
-    canvas.translate(0, -_distanceBetweenTopBottomCenters);
-    canvas.scale(inverseTextScale, inverseTextScale);
 
+    //  draw duration text
+    canvas.save();
+    canvas.translate(shift, -_distanceBetweenTopBottomCenters);
+    canvas.scale(inverseTextScale, inverseTextScale);
     labelText.paint(
         canvas,
         Offset.zero -
