@@ -16,13 +16,13 @@
 15-->/Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/android/app/src/main/AndroidManifest.xml:3:5-66
 15-->/Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/android/app/src/main/AndroidManifest.xml:3:22-64
 16    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-16-->[com.google.android.exoplayer:exoplayer-core:2.17.1] /Users/thaiminh/.gradle/caches/transforms-3/9c3e1c556f4536cd794cd7354f8dc080/transformed/jetified-exoplayer-core-2.17.1/AndroidManifest.xml:24:5-79
-16-->[com.google.android.exoplayer:exoplayer-core:2.17.1] /Users/thaiminh/.gradle/caches/transforms-3/9c3e1c556f4536cd794cd7354f8dc080/transformed/jetified-exoplayer-core-2.17.1/AndroidManifest.xml:24:22-76
+16-->[com.google.android.exoplayer:exoplayer-core:2.14.1] /Users/thaiminh/.gradle/caches/transforms-3/6d120143ea964a2ef5921932cb2cf492/transformed/jetified-exoplayer-core-2.14.1/AndroidManifest.xml:24:5-79
+16-->[com.google.android.exoplayer:exoplayer-core:2.14.1] /Users/thaiminh/.gradle/caches/transforms-3/6d120143ea964a2ef5921932cb2cf492/transformed/jetified-exoplayer-core-2.14.1/AndroidManifest.xml:24:22-76
 17
 18    <application
 19        android:name="android.app.Application"
 20        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-20-->[androidx.core:core:1.7.0] /Users/thaiminh/.gradle/caches/transforms-3/5e083c06c9925c2309f02468fc66e376/transformed/core-1.7.0/AndroidManifest.xml:24:18-86
+20-->[androidx.core:core:1.6.0] /Users/thaiminh/.gradle/caches/transforms-3/acbce933e4b464a5224ed377a62db1f5/transformed/core-1.6.0/AndroidManifest.xml:24:18-86
 21        android:debuggable="true"
 22        android:icon="@mipmap/ic_launcher"
 23        android:label="helloworld" >

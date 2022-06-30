@@ -7,9 +7,6 @@ class PlayerIndicatorShape {
   const PlayerIndicatorShape();
 
   static const double _overloadPadding = 10;
-
-  static const double _topLobeRadius = 16.0;
-  static const double _labelPadding = 8.0;
   static const double _distanceBetweenTopBottomCenters = 80.0;
 
   static const Offset _topLobeCenter =
@@ -26,42 +23,6 @@ class PlayerIndicatorShape {
     path.addRect(rect);
   }
 
-  double _getIdealOffset(
-    double halfWidthNeeded,
-    double scale,
-    Offset center,
-    double widthWithOverflow,
-  ) {
-    const double edgeMargin = 8.0;
-    final Rect topLobeRect = Rect.fromLTWH(
-      -_topLobeRadius - halfWidthNeeded,
-      -_topLobeRadius - _distanceBetweenTopBottomCenters,
-      2.0 * (_topLobeRadius + halfWidthNeeded),
-      2.0 * _topLobeRadius,
-    );
-
-    final Offset topLeft = (topLobeRect.topLeft * scale) + center;
-    final Offset bottomRight = (topLobeRect.bottomRight * scale) + center;
-    double shift = 0.0;
-
-    if (topLeft.dx < edgeMargin) {
-      shift = edgeMargin - topLeft.dx;
-    }
-
-    final double endGlobal = widthWithOverflow;
-    if (bottomRight.dx > endGlobal - edgeMargin) {
-      shift = endGlobal - edgeMargin - bottomRight.dx;
-    }
-
-    shift = scale == 0.0 ? 0.0 : shift / scale;
-    if (shift < 0.0) {
-      shift = math.max(shift, -halfWidthNeeded);
-    } else {
-      shift = math.min(shift, halfWidthNeeded);
-    }
-    return shift;
-  }
-
   void paint(
     Canvas canvas,
     Offset center,
@@ -72,14 +33,14 @@ class PlayerIndicatorShape {
     double textScaleFactor,
     Size sizeWithOverflow,
   ) {
+    if (scale == 0.0) {
+      return;
+    }
+
     double width =
         MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.width;
 
     double previewTransX;
-
-    if (scale == 0.0) {
-      return;
-    }
 
     // check preview overload screen
     if ((center.dx + _previewWidth / 2) > width) {
@@ -96,16 +57,10 @@ class PlayerIndicatorShape {
     final double labelHalfWidth = labelText.width / 2.0;
 
     canvas.save();
-    canvas.scale(overallScale, overallScale);
     canvas.translate(previewTransX, center.dy);
+    canvas.scale(overallScale, overallScale);
 
     final Path path = Path();
-    final double halfWidthNeeded = math.max(
-      0.0,
-      inverseTextScale * labelHalfWidth - (_topLobeRadius - _labelPadding),
-    );
-    final double shift = _getIdealOffset(
-        halfWidthNeeded, overallScale, center, sizeWithOverflow.width);
 
     _addRect(path, _topLobeCenter);
     canvas.drawPath(path, paint);
@@ -130,10 +85,9 @@ class PlayerIndicatorShape {
           paint);
     }
 
-
     //  draw duration text
     canvas.save();
-    canvas.translate(shift, -_distanceBetweenTopBottomCenters);
+    canvas.translate(0, -_distanceBetweenTopBottomCenters);
     canvas.scale(inverseTextScale, inverseTextScale);
     labelText.paint(
         canvas,

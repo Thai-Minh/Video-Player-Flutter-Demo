@@ -1,12 +1,13 @@
 import 'dart:async';
-import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:helloworld/custom/player_indicator_shape.dart';
+import 'package:native_device_orientation/native_device_orientation.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wakelock/wakelock.dart';
 
+import 'advanced_overlay_widget.dart';
 import 'custom/player_path_painter.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -30,14 +31,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   PlayerIndicatorShape indicatorShape = const PlayerIndicatorShape();
 
-  var widgetKey = GlobalKey();
+  Orientation? target;
 
-  Future<ui.Image> load(String asset) async {
-    ByteData data = await rootBundle.load(asset);
-    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
-    ui.FrameInfo fi = await codec.getNextFrame();
-    return fi.image;
-  }
+  var widgetKey = GlobalKey();
 
   @override
   void initState() {
@@ -61,6 +57,21 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     _initializeVideoPlayerFuture = _controller.initialize();
     _controller.setLooping(true);
     _controller.addListener(listener);
+
+    NativeDeviceOrientationCommunicator()
+        .onOrientationChanged(useSensor: true)
+        .listen((event) {
+      final isPortrait = event == NativeDeviceOrientation.portraitUp;
+      final isLandscape = event == NativeDeviceOrientation.landscapeLeft ||
+          event == NativeDeviceOrientation.landscapeRight;
+      final isTargetPortrait = target == Orientation.portrait;
+      final isTargetLandscape = target == Orientation.landscape;
+
+      if (isPortrait && isTargetPortrait || isLandscape && isTargetLandscape) {
+        target = null;
+        SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+      }
+    });
   }
 
   void listener() async {
@@ -84,9 +95,27 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
   }
 
+  void setOrientation(bool isPortrait) {
+    print("MTHAI 2: $isPortrait");
+
+    if (isPortrait) {
+      Wakelock.disable();
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
+    } else {
+      Wakelock.enable();
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+    }
+  }
+
   @override
   void dispose() {
     _controller.removeListener(listener);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     super.dispose();
   }
 
@@ -103,55 +132,54 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             return Container(
               alignment: Alignment.topCenter,
               color: Colors.black,
-              child: Stack(children: <Widget>[
-                AspectRatio(
-                    aspectRatio: _controller.value.aspectRatio,
-                    child: VideoPlayer(_controller)),
-                Positioned.fill(
-                    child: Stack(
-                  children: [
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          trackShape: const RectangularSliderTrackShape(),
-                          activeTrackColor: Colors.blue[700],
-                          inactiveTrackColor: Colors.blue[100],
-                          trackHeight: 4.0,
-                          thumbShape: SliderComponentShape.noOverlay,
-                          thumbColor: Colors.blueAccent,
-                          overlayColor: Colors.blueAccent,
-                          overlayShape:
-                              const RoundSliderOverlayShape(overlayRadius: 6.0),
-                          tickMarkShape: const RoundSliderTickMarkShape(),
-                          activeTickMarkColor: Colors.blue[700],
-                          inactiveTickMarkColor: Colors.blue[100],
-                          valueIndicatorTextStyle: const TextStyle(
-                            color: Colors.white,
+              child: OrientationBuilder(
+                builder: (context, orientation) {
+                  final isPortrait = orientation == Orientation.portrait;
+
+                  print("MTHAI 1: $isPortrait");
+
+                  setOrientation(isPortrait);
+
+                  return Stack(
+                      fit: isPortrait ? StackFit.loose : StackFit.expand,
+                      children: <Widget>[
+                        buildVideoPlayer(),
+                        Positioned.fill(
+                          child: AdvancedOverlayWidget(
+                            controller: _controller,
+                            sliderValue: sliderValue,
+                            position: position,
+                            duration: duration,
+                            validPosition: validPosition,
+                            indicatorShape: indicatorShape,
+                            image: sliderValue % 20 == 0
+                                ? customImage2
+                                : customImage1,
+                            positionChanged: (progress) {
+                              _onSliderPositionChanged(progress);
+                            },
+                            onClickedFullScreen: () {
+                              target = isPortrait
+                                  ? Orientation.landscape
+                                  : Orientation.portrait;
+
+                              if (isPortrait) {
+                                SystemChrome.setPreferredOrientations([
+                                  DeviceOrientation.landscapeRight,
+                                  DeviceOrientation.landscapeLeft,
+                                ]);
+                              } else {
+                                SystemChrome.setPreferredOrientations([
+                                  DeviceOrientation.portraitUp,
+                                  DeviceOrientation.portraitDown,
+                                ]);
+                              }
+                            },
                           ),
                         ),
-                        child: PlayerSlider(
-                          value: sliderValue,
-                          min: 0.0,
-                          max: (!validPosition)
-                              ? 1.0
-                              : _controller.value.duration.inSeconds.toDouble(),
-                          label: position,
-                          divisions: _controller.value.duration.inSeconds,
-                          onChanged:
-                              validPosition ? _onSliderPositionChanged : null,
-                          image: sliderValue % 20 == 0
-                              ? customImage2
-                              : customImage1,
-                          indicatorShape: indicatorShape,
-                        ),
-                      ),
-                    )
-                  ],
-                ))
-              ]),
+                      ]);
+                },
+              ),
             );
           } else {
             return const Center(
@@ -160,20 +188,27 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           }
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            if (_controller.value.isPlaying) {
-              _controller.pause();
-            } else {
-              _controller.play();
-            }
-          });
-        },
-        child: Icon(
-          _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-        ),
-      ),
+    );
+  }
+
+  Widget buildVideoPlayer() {
+    final video = AspectRatio(
+        aspectRatio: _controller.value.aspectRatio,
+        child: VideoPlayer(_controller));
+
+    return buildFullScreen(child: video);
+  }
+
+  Widget buildFullScreen({
+    required Widget child,
+  }) {
+    final size = _controller.value.size;
+    final width = size.width;
+    final height = size.height;
+
+    return FittedBox(
+      fit: BoxFit.cover,
+      child: SizedBox(width: width, height: height, child: child),
     );
   }
 
@@ -186,5 +221,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   Future<void> setTime(int time) async {
     return await _controller.seekTo(Duration(milliseconds: time));
+  }
+
+  Future<ui.Image> load(String asset) async {
+    ByteData data = await rootBundle.load(asset);
+    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+    ui.FrameInfo fi = await codec.getNextFrame();
+    return fi.image;
   }
 }
