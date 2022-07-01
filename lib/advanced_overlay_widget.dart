@@ -8,18 +8,18 @@ import 'custom/player_path_painter.dart';
 
 class AdvancedOverlayWidget extends StatelessWidget {
   final VideoPlayerController controller;
-  final VoidCallback onClickedFullScreen;
 
   final double sliderValue;
   final String position;
   final bool validPosition;
+
   final PlayerIndicatorShape indicatorShape;
 
-  final ui.Image? image;
+  final List<ui.Image> images;
 
   final ValueChanged<double> onPositionChanged;
-  final ValueChanged<Offset> onOffsetChanged;
-  final ValueChanged<bool> onDragging;
+  final OffsetChanged offsetChanged;
+  final VoidCallback onClickedFullScreen;
 
   static const allSpeeds = <double>[0.25, 0.5, 1, 1.5, 2, 3, 5, 10];
 
@@ -30,10 +30,9 @@ class AdvancedOverlayWidget extends StatelessWidget {
     required this.position,
     required this.validPosition,
     required this.indicatorShape,
-    required this.image,
+    required this.images,
     required this.onPositionChanged,
-    required this.onOffsetChanged,
-    required this.onDragging,
+    required this.offsetChanged,
     required this.onClickedFullScreen,
   }) : super(key: key);
 
@@ -53,7 +52,7 @@ class AdvancedOverlayWidget extends StatelessWidget {
                 child: Row(
                   children: [
                     Expanded(child: buildIndicator(context)),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     GestureDetector(
                       onTap: onClickedFullScreen,
                       child: const Icon(
@@ -69,45 +68,51 @@ class AdvancedOverlayWidget extends StatelessWidget {
         ),
       );
 
-  Widget buildIndicator(BuildContext context) => SliderTheme(
-        data: SliderTheme.of(context).copyWith(
-          trackShape: const RectangularSliderTrackShape(),
-          activeTrackColor: Colors.blue[700],
-          inactiveTrackColor: Colors.blue[100],
-          trackHeight: 4.0,
-          thumbShape: SliderComponentShape.noOverlay,
-          thumbColor: Colors.blueAccent,
-          overlayColor: Colors.blueAccent,
-          overlayShape: const RoundSliderOverlayShape(overlayRadius: 6.0),
-          tickMarkShape: const RoundSliderTickMarkShape(),
-          activeTickMarkColor: Colors.blue[700],
-          inactiveTickMarkColor: Colors.blue[100],
-          valueIndicatorTextStyle: const TextStyle(
-            color: Colors.white,
-          ),
+  Widget buildIndicator(BuildContext context) {
+    return SliderTheme(
+      data: SliderTheme.of(context).copyWith(
+        trackShape: const RectangularSliderTrackShape(),
+        activeTrackColor: Colors.blue[700],
+        inactiveTrackColor: Colors.blue[100],
+        trackHeight: 4.0,
+        thumbShape: SliderComponentShape.noOverlay,
+        thumbColor: Colors.blueAccent,
+        overlayColor: Colors.blueAccent,
+        // overlayShape: const RoundSliderOverlayShape(overlayRadius: 6.0),
+        overlayShape: SliderComponentShape.noOverlay,
+        tickMarkShape: const RoundSliderTickMarkShape(),
+        activeTickMarkColor: Colors.blue[700],
+        inactiveTickMarkColor: Colors.blue[100],
+        valueIndicatorTextStyle: const TextStyle(
+          color: Colors.white,
         ),
-        child: PlayerSlider(
-          value: sliderValue,
-          min: 0.0,
-          max: (!validPosition)
-              ? 1.0
-              : controller.value.duration.inSeconds.toDouble(),
-          label: position,
-          divisions: controller.value.duration.inSeconds,
-          onChanged: validPosition ? onPositionChanged : null,
-          onChangeStart: (_) {
-            controller.pause();
-            onDragging(true);
-          },
-          onChangeEnd: (_) {
-            controller.play();
-            onDragging(false);
-          },
-          onOffsetChange: onOffsetChanged,
-          image: image,
-          indicatorShape: indicatorShape,
-        ),
-      );
+      ),
+      child: SizedBox(
+          height: 40,
+          child: PlayerSlider(
+            value: sliderValue,
+            min: 0.0,
+            max: (!validPosition)
+                ? 1.0
+                : controller.value.duration.inSeconds.toDouble(),
+            label: position,
+            divisions: controller.value.duration.inSeconds,
+            onChanged: validPosition ? onPositionChanged : null,
+            onChangeStart: (_) {
+              controller.pause();
+            },
+            onChangeEnd: (_) {
+              controller.play();
+            },
+            onOffsetChanged: (center, isDragging) {
+              offsetChanged(center, isDragging);
+            },
+            // image: images.isNotEmpty ? images[0] : null,
+            image: null,
+            indicatorShape: indicatorShape,
+          )),
+    );
+  }
 
   Widget buildSpeed() => Align(
         alignment: Alignment.topRight,

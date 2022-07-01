@@ -1,6 +1,9 @@
 # This is a generated file; do not edit or check into version control.
+bitmap=/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/bitmap-0.1.2/
 native_device_orientation=/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/native_device_orientation-1.1.4/
-video_player=/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/video_player-2.2.4/
+video_player=/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/video_player-2.4.5/
+video_player_android=/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/video_player_android-2.3.6/
+video_player_avfoundation=/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/video_player_avfoundation-2.3.5/
 video_player_web=/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/video_player_web-2.0.10/
 wakelock=/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/wakelock-0.6.1+2/
 wakelock_macos=/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/wakelock_macos-0.4.0/

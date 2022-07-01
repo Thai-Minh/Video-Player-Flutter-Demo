@@ -9,8 +9,7 @@ import 'package:wakelock/wakelock.dart';
 
 import 'advanced_overlay_widget.dart';
 import 'custom/player_path_painter.dart';
-
-const double videoRatio = 16 / 9;
+import 'image_repository.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   const VideoPlayerScreen({super.key});
@@ -23,6 +22,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   late VideoPlayerController _controller;
   late Future<void> _initializeVideoPlayerFuture;
 
+  var widthScreen = 0.0;
+
   double sliderValue = 0.0;
   String position = '';
   String duration = '';
@@ -30,28 +31,40 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   bool isDragging = false;
 
-  Offset centerValue = Offset(0.0, 0.0);
+  double transX = 0.0;
 
-  ui.Image? customImage1;
+  List<Image> images = [];
+  List<ui.Image> images2 = [];
 
   PlayerIndicatorShape indicatorShape = const PlayerIndicatorShape();
 
   Orientation? target;
-
-  var widgetKey = GlobalKey();
+  static const double _overloadPadding = 10;
 
   @override
   void initState() {
-    load('assets/images/ratio169.png').then((image) {
-      setState(() {
-        customImage1 = image;
-      });
-    });
+    // test 1
+    var imagesFuture1 = RenderBitmap().getImageSourceFormUrl(
+        "https://i.ytimg.com/sb/hkP4tVTdsz8/storyboard3_L2/M0.jpg?sqp=-oaymwENSDfyq4qpAwVwAcABBqLzl_8DBgjFrO-VBg==&sigh=rs\$AOn4CLBo_Qgn_lqi6XFJZ5oJxiNRWjCCfA",
+        5,
+        5);
+
+    imagesFuture1
+        .then((value) => {images = value.map((e) => Image.memory(e)).toList()});
+
+    // test 2
+    var imagesFuture2 = RenderBitmap().getUiImageFormUrl(
+        "https://i.ytimg.com/sb/hkP4tVTdsz8/storyboard3_L2/M0.jpg?sqp=-oaymwENSDfyq4qpAwVwAcABBqLzl_8DBgjFrO-VBg==&sigh=rs\$AOn4CLBo_Qgn_lqi6XFJZ5oJxiNRWjCCfA",
+        5,
+        5);
+
+    imagesFuture2.then((value) => {images2 = value});
 
     super.initState();
 
     _controller = VideoPlayerController.network(
-        "https://bitmovin-a.akamaihd.net/content/MI201109210084_1/mpds/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.mpd");
+        "https://bitmovin-a.akamaihd.net/content/MI201109210084_1/mpds/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.mpd",
+        videoPlayerOptions: VideoPlayerOptions(allowBackgroundPlayback: true));
 
     _initializeVideoPlayerFuture = _controller.initialize();
     _controller.setLooping(true);
@@ -116,6 +129,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext? context) {
+    if (widthScreen == 0.0) {
+      widthScreen =
+          MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.width;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Video'),
@@ -137,7 +155,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       fit: isPortrait ? StackFit.loose : StackFit.expand,
                       children: <Widget>[
                         buildVideoPlayer(),
-                        buildPreviewFrame(context),
                         Positioned.fill(
                           child: AdvancedOverlayWidget(
                             controller: _controller,
@@ -145,20 +162,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                             position: position,
                             validPosition: validPosition,
                             indicatorShape: indicatorShape,
-                            image: customImage1,
+                            images: images2,
                             onPositionChanged: _onSliderPositionChanged,
-                            onOffsetChanged: (center) {
-                              if (isDragging) {
-                                centerValue = center;
-                              } else {
-                                centerValue = Offset.zero;
-                              }
-                            },
-                            onDragging: (dragging) {
+                            offsetChanged: (center, dragging) {
+                              transX = center.dx;
                               isDragging = dragging;
-                              if (!dragging) {
-                                centerValue = Offset.zero;
-                              }
                             },
                             onClickedFullScreen: () {
                               target = isPortrait
@@ -179,6 +187,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                             },
                           ),
                         ),
+                        buildPreviewFrame(),
                       ]);
                 },
               ),
@@ -201,22 +210,47 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     return buildFullScreen(child: video);
   }
 
-  Widget buildPreviewFrame(BuildContext context) {
-    var width = MediaQuery.of(context).size.width * 0.3;
+  Widget buildPreviewFrame() {
+    double videoRatio = _controller.value.aspectRatio;
+
+    var width = widthScreen * 0.3;
     var height = width / videoRatio;
 
-    print("MTHAI: centerValue: $centerValue");
-    return Container(
-      width: width,
-      height: height,
-      child: Transform.translate(
-          offset: centerValue,
-          child: centerValue != Offset.zero
-              ? Container(
-                  color: Colors.black,
-                  child: Image.asset('assets/images/dog.png'))
-              : Container()),
-    );
+    double dx;
+    if ((transX + width / 2) > widthScreen) {
+      dx = widthScreen - width - _overloadPadding;
+    } else if ((transX - width / 2) < 0) {
+      dx = _overloadPadding;
+    } else {
+      dx = transX - width / 2;
+    }
+
+    var frameIndex = _controller.value.position.inMinutes;
+
+    return AnimatedOpacity(
+        opacity: isDragging ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 250),
+        child: Wrap(children: [
+          Transform.translate(
+              offset: Offset(dx, (widthScreen / videoRatio) / 2),
+              child: Column(children: [
+                Container(
+                    width: width,
+                    height: height,
+                    color: Colors.black,
+                    child: (images.isNotEmpty && frameIndex <= images.length)
+                        ? images[frameIndex]
+                        : const Center(
+                            child:
+                                CircularProgressIndicator(color: Colors.white),
+                          )),
+                Text(
+                  position,
+                  maxLines: 1,
+                  style: const TextStyle(color: Colors.white),
+                )
+              ]))
+        ]));
   }
 
   Widget buildFullScreen({

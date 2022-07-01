@@ -83,17 +83,17 @@ class PlayerIndicatorShape {
           Offset.zero & Size(labelImage.width * 1.0, labelImage.height * 1.0),
           imageRect2,
           paint);
-    }
 
-    //  draw duration text
-    canvas.save();
-    canvas.translate(0, -_distanceBetweenTopBottomCenters);
-    canvas.scale(inverseTextScale, inverseTextScale);
-    labelText.paint(
-        canvas,
-        Offset.zero -
-            Offset(labelHalfWidth, -_distanceBetweenTopBottomCenters / 2.0));
-    canvas.restore();
-    canvas.restore();
+      //  draw duration text
+      canvas.save();
+      canvas.translate(0, -_distanceBetweenTopBottomCenters);
+      canvas.scale(inverseTextScale, inverseTextScale);
+      labelText.paint(
+          canvas,
+          Offset.zero -
+              Offset(labelHalfWidth, -_distanceBetweenTopBottomCenters / 2.0));
+      canvas.restore();
+      canvas.restore();
+    }
   }
 }

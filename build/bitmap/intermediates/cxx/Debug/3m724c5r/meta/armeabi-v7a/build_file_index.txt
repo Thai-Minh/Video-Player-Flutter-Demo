@@ -1,0 +1,1 @@
+/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/bitmap-0.1.2/android/CMakeLists.txt

@@ -9,12 +9,14 @@ import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter/services.dart';
 import 'package:helloworld/custom/player_path_painter.dart';
 
+typedef OffsetChanged = void Function(Offset, bool);
+
 class PlayerSlider extends StatefulWidget {
   const PlayerSlider({
     Key? key,
     required this.value,
     required this.onChanged,
-    required this.onOffsetChange,
+    required this.onOffsetChanged,
     required this.divisions,
     required this.indicatorShape,
     this.label,
@@ -43,7 +45,7 @@ class PlayerSlider extends StatefulWidget {
 
   final ValueChanged<double>? onChangeEnd;
 
-  final ValueChanged<Offset>? onOffsetChange;
+  final OffsetChanged onOffsetChanged;
 
   final double min;
 
@@ -385,7 +387,7 @@ class _SliderState extends State<PlayerSlider> with TickerProviderStateMixin {
                 : null,
             onChangeStart: _handleDragStart,
             onChangeEnd: _handleDragEnd,
-            onOffsetChange: widget.onOffsetChange,
+            onOffsetChanged: widget.onOffsetChanged,
             state: this,
             semanticFormatterCallback: widget.semanticFormatterCallback,
             hasFocus: _focused,
@@ -431,7 +433,7 @@ class _SliderRenderObjectWidget extends LeafRenderObjectWidget {
     required this.onChanged,
     required this.onChangeStart,
     required this.onChangeEnd,
-    required this.onOffsetChange,
+    required this.onOffsetChanged,
     required this.state,
     required this.semanticFormatterCallback,
     required this.hasFocus,
@@ -449,7 +451,7 @@ class _SliderRenderObjectWidget extends LeafRenderObjectWidget {
   final ValueChanged<double>? onChanged;
   final ValueChanged<double>? onChangeStart;
   final ValueChanged<double>? onChangeEnd;
-  final ValueChanged<Offset>? onOffsetChange;
+  final OffsetChanged onOffsetChanged;
   final SemanticFormatterCallback? semanticFormatterCallback;
   final _SliderState state;
   final bool hasFocus;
@@ -467,7 +469,7 @@ class _SliderRenderObjectWidget extends LeafRenderObjectWidget {
       textScaleFactor: textScaleFactor,
       screenSize: screenSize,
       onChanged: onChanged,
-      onOffsetChange: onOffsetChange,
+      onOffsetChanged: onOffsetChanged,
       onChangeStart: onChangeStart,
       onChangeEnd: onChangeEnd,
       state: state,
@@ -492,7 +494,7 @@ class _SliderRenderObjectWidget extends LeafRenderObjectWidget {
       ..textScaleFactor = textScaleFactor
       ..screenSize = screenSize
       ..onChanged = onChanged
-      ..onOffsetChange = onOffsetChange
+      ..onOffsetChanged = onOffsetChanged
       ..onChangeStart = onChangeStart
       ..onChangeEnd = onChangeEnd
       ..textDirection = Directionality.of(context)
@@ -516,7 +518,7 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     required Size screenSize,
     required TargetPlatform platform,
     required ValueChanged<double>? onChanged,
-    required ValueChanged<Offset>? onOffsetChange,
+    required OffsetChanged onOffsetChanged,
     required SemanticFormatterCallback? semanticFormatterCallback,
     required this.onChangeStart,
     required this.onChangeEnd,
@@ -764,7 +766,7 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     }
   }
 
-  ValueChanged<Offset>? onOffsetChange;
+  OffsetChanged? onOffsetChanged;
   ValueChanged<double>? onChangeStart;
   ValueChanged<double>? onChangeEnd;
 
@@ -1111,6 +1113,8 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     if (isInteractive &&
         label != null &&
         !_valueIndicatorAnimation.isDismissed) {
+      onOffsetChanged!(offset + thumbCenter, true);
+
       if (showValueIndicator) {
         final ColorTween enableColor = ColorTween(
           begin: sliderTheme.disabledThumbColor,
@@ -1118,7 +1122,6 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         );
 
         _state.paintValueIndicator = (PaintingContext context, Offset offset) {
-          onOffsetChange!(offset + thumbCenter);
           if (attached) {
             _indicatorShape.paint(
                 context.canvas,
@@ -1132,6 +1135,8 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
           }
         };
       }
+    } else {
+      onOffsetChanged!(offset + thumbCenter, false);
     }
 
     _sliderTheme.thumbShape!.paint(

@@ -1,0 +1,27 @@
+{
+  "buildFiles": [
+    "/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/bitmap-0.1.2/android/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/thaiminh/Library/Android/sdk/cmake/3.18.1/bin/ninja",
+      "-C",
+      "/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/bitmap-0.1.2/android/.cxx/Debug/3m724c5r/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/thaiminh/Library/Android/sdk/cmake/3.18.1/bin/ninja",
+    "-C",
+    "/Users/thaiminh/flutter/.pub-cache/hosted/pub.dartlang.org/bitmap-0.1.2/android/.cxx/Debug/3m724c5r/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "bitmap::@6890427a1f51a3e7e1df": {
+      "artifactName": "bitmap",
+      "abi": "x86",
+      "output": "/Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/build/bitmap/intermediates/cxx/Debug/3m724c5r/obj/x86/libbitmap.so",
+      "runtimeFiles": []
+    }
+  }
+}
