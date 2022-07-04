@@ -51,6 +51,7 @@ class AdvancedOverlayWidget extends StatelessWidget {
                 right: 0,
                 child: Row(
                   children: [
+                    const SizedBox(width: 8),
                     Expanded(child: buildIndicator(context)),
                     const SizedBox(width: 8),
                     GestureDetector(
