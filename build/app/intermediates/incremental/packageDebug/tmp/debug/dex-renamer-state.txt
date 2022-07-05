@@ -1,4 +1,4 @@
-#Tue Jul 05 10:31:53 ICT 2022
+#Tue Jul 05 13:38:51 ICT 2022
 base.0=/Users/thaiminh/Documents/GitHub/Video-Player-Flutter-Demo/build/app/intermediates/dex/debug/mergeDexDebug/classes.dex
 renamed.0=classes.dex
 path.0=classes.dex

@@ -91,7 +91,7 @@ class AdvancedOverlayWidget extends StatelessWidget {
             max: (!validPosition)
                 ? 1.0
                 : controller.value.duration.inSeconds.toDouble(),
-            label: position,
+            // label: position,
             divisions: controller.value.duration.inSeconds,
             onChanged: validPosition ? onPositionChanged : null,
             onChangeStart: (_) {

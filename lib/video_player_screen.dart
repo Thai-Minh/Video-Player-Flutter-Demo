@@ -38,7 +38,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   PlayerIndicatorShape indicatorShape = const PlayerIndicatorShape();
 
-  Orientation? target;
+  Orientation target = Orientation.portrait;
   static const double _overloadPadding = 10;
 
   @override
@@ -80,7 +80,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       final isTargetLandscape = target == Orientation.landscape;
 
       if (isPortrait && isTargetPortrait || isLandscape && isTargetLandscape) {
-        target = null;
         SystemChrome.setPreferredOrientations(DeviceOrientation.values);
       }
     });
@@ -129,11 +128,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext? context) {
-    if (widthScreen == 0.0) {
-      widthScreen =
-          MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.width;
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Video'),
@@ -213,8 +207,19 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Widget buildPreviewFrame() {
     double videoRatio = _controller.value.aspectRatio;
 
-    var width = widthScreen * 0.3;
-    var height = width / videoRatio;
+    double width = 0.0;
+
+    if (target == Orientation.portrait) {
+      widthScreen =
+          MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.width;
+      width = widthScreen * 0.3;
+    } else {
+      widthScreen =
+          MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.width;
+      width = widthScreen * 0.2;
+    }
+
+    double height = width / videoRatio;
 
     double dx;
     if ((transX + width / 2) > widthScreen) {
