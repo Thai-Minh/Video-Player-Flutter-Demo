@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'video_player_screen.dart';
+import 'package:helloworld/video_player.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,9 +11,15 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'Video Player Flutter Demo',
-      home: VideoPlayerScreen(),
+      // home: VideoPlayerScreen(),
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text("Video Player"),
+        ),
+        body:  const VideoPlayer(),
+      ),
     );
   }
 }

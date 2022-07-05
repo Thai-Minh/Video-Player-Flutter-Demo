@@ -18,7 +18,7 @@ class PlayerSlider extends StatefulWidget {
     required this.onChanged,
     required this.onOffsetChanged,
     required this.divisions,
-    required this.indicatorShape,
+    this.indicatorShape,
     this.label,
     this.image,
     this.activeColor,
@@ -51,7 +51,7 @@ class PlayerSlider extends StatefulWidget {
 
   final double max;
 
-  final PlayerIndicatorShape indicatorShape;
+  final PlayerIndicatorShape? indicatorShape;
 
   final int divisions;
 
@@ -444,7 +444,7 @@ class _SliderRenderObjectWidget extends LeafRenderObjectWidget {
   final int? divisions;
   final String? label;
   final ui.Image? image;
-  final PlayerIndicatorShape indicatorShape;
+  final PlayerIndicatorShape? indicatorShape;
   final SliderThemeData sliderTheme;
   final double textScaleFactor;
   final Size screenSize;
@@ -512,7 +512,7 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     required int? divisions,
     required String? label,
     required ui.Image? image,
-    required PlayerIndicatorShape indicatorShape,
+    required PlayerIndicatorShape? indicatorShape,
     required SliderThemeData sliderTheme,
     required double textScaleFactor,
     required Size screenSize,
@@ -702,10 +702,10 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     _image = value;
   }
 
-  PlayerIndicatorShape get indicatorShape => const PlayerIndicatorShape();
-  PlayerIndicatorShape _indicatorShape;
+  PlayerIndicatorShape? get indicatorShape => const PlayerIndicatorShape();
+  PlayerIndicatorShape? _indicatorShape;
 
-  set indicatorShape(PlayerIndicatorShape value) {
+  set indicatorShape(PlayerIndicatorShape? value) {
     if (value == _indicatorShape) {
       return;
     }
@@ -1123,7 +1123,7 @@ class _RenderSlider extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
 
         _state.paintValueIndicator = (PaintingContext context, Offset offset) {
           if (attached) {
-            _indicatorShape.paint(
+            _indicatorShape?.paint(
                 context.canvas,
                 offset + thumbCenter,
                 Paint()..color = enableColor.evaluate(_enableAnimation)!,
