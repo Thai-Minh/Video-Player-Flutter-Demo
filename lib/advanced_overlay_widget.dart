@@ -37,36 +37,31 @@ class AdvancedOverlayWidget extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () =>
-            controller.value.isPlaying ? controller.pause() : controller.play(),
-        child: Stack(
-          children: <Widget>[
-            buildPlay(),
-            buildSpeed(),
-            Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Row(
-                  children: [
-                    const SizedBox(width: 8),
-                    Expanded(child: buildIndicator(context)),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: onClickedFullScreen,
-                      child: const Icon(
-                        Icons.fullscreen,
-                        color: Colors.white,
-                        size: 28,
-                      ),
+  Widget build(BuildContext context) => Stack(
+        children: <Widget>[
+          buildPlay(),
+          buildSpeed(),
+          Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Row(
+                children: [
+                  const SizedBox(width: 8),
+                  Expanded(child: buildIndicator(context)),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: onClickedFullScreen,
+                    child: const Icon(
+                      Icons.fullscreen,
+                      color: Colors.white,
+                      size: 28,
                     ),
-                    const SizedBox(width: 8),
-                  ],
-                )),
-          ],
-        ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              )),
+        ],
       );
 
   Widget buildIndicator(BuildContext context) {
@@ -136,17 +131,63 @@ class AdvancedOverlayWidget extends StatelessWidget {
       );
 
   Widget buildPlay() {
-    return controller.value.isPlaying
-        ? Container()
-        : Container(
-            color: Colors.black26,
-            child: const Center(
-              child: Icon(
-                Icons.play_arrow,
-                color: Colors.white,
-                size: 70,
-              ),
-            ),
-          );
+    return AnimatedOpacity(
+        opacity: !controller.value.isPlaying ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 500),
+        // The green box must be a child of the AnimatedOpacity widget.
+        child: Container(
+          color: Colors.black26,
+          child: Center(
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                buildPlayerIcon(PlayAction.previous, Icons.skip_previous, 30),
+                const SizedBox(width: 40),
+                buildPlayerIcon(PlayAction.play, Icons.play_arrow, 70),
+                const SizedBox(width: 40),
+                buildPlayerIcon(PlayAction.next, Icons.skip_next, 30),
+              ])),
+        ));
+  }
+
+  Widget buildPlayerIcon(PlayAction action, IconData icon, double size) {
+    return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          Duration currentPosition = controller.value.position;
+
+          switch (action) {
+            case PlayAction.play:
+              controller.value.isPlaying
+                  ? controller.pause()
+                  : controller.play();
+              break;
+            case PlayAction.next:
+              if (currentPosition.inSeconds <
+                  controller.value.duration.inSeconds) {
+                controller.seekTo(currentPosition + const Duration(seconds: 5));
+              } else {
+                controller.seekTo(controller.value.duration);
+              }
+              break;
+            case PlayAction.previous:
+              if (currentPosition.inSeconds > 5) {
+                controller.seekTo(currentPosition - const Duration(seconds: 5));
+              } else {
+                controller.seekTo(const Duration(seconds: 0));
+              }
+              break;
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: size,
+          ),
+        ));
   }
 }
+
+enum PlayAction { next, previous, play }
