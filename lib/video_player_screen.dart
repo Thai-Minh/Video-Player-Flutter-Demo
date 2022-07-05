@@ -276,11 +276,4 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Future<void> setTime(int time) async {
     return await _controller.seekTo(Duration(milliseconds: time));
   }
-
-  Future<ui.Image> load(String asset) async {
-    ByteData data = await rootBundle.load(asset);
-    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
-    ui.FrameInfo fi = await codec.getNextFrame();
-    return fi.image;
-  }
 }
