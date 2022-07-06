@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
         appBar: AppBar(
           title: const Text("Video Player"),
         ),
-        body:  const VideoPlayer(),
+        body:  const Center(child: VideoPlayer(),),
       ),
     );
   }
