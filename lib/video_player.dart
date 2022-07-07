@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:helloworld/custom_progress_bar.dart';
 import 'package:helloworld/preview_loader.dart';
 import 'package:helloworld/utils.dart';
 import 'package:video_player/video_player.dart' as player;
@@ -23,6 +24,16 @@ class _VideoPlayerState extends State<VideoPlayer> {
   int get duration => _controller.value.duration.inMilliseconds;
 
   int get position => _controller.value.position.inMilliseconds;
+
+  int get buffer {
+    var list = _controller.value.buffered;
+
+    if (list.isNotEmpty) {
+      return list.first.end.inMilliseconds;
+    } else {
+      return 0;
+    }
+  }
 
   String get strPosition =>
       Utils().formatTimeToString(_controller.value.position.inMilliseconds);
@@ -74,6 +85,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
                   widthScreen: widthScreen,
                   position: position,
                   duration: duration,
+                  buffer: buffer,
                   strPosition: strPosition,
                   onPositionChanged: _onPositionChanged,
                   onChangeEnd: () {
@@ -139,6 +151,7 @@ class _PreviewController extends StatefulWidget {
     required this.widthScreen,
     required this.position,
     required this.duration,
+    required this.buffer,
     required this.strPosition,
     required this.onPositionChanged,
     required this.onChangeEnd,
@@ -148,6 +161,7 @@ class _PreviewController extends StatefulWidget {
   final double widthScreen;
   final int position;
   final int duration;
+  final int buffer;
 
   final String strPosition;
 
@@ -173,21 +187,25 @@ class _PreviewControllerState extends State<_PreviewController> {
       child: Column(
         children: [
           IgnorePointer(ignoring: true, child: buildOverlay()),
-          Row(
-            children: [
-              const SizedBox(width: 8),
-              Expanded(child: buildSlider(context)),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: widget.onRotateClicked,
-                child: const Icon(
-                  Icons.fullscreen,
-                  color: Colors.white,
-                  size: 28,
+          Container(color: Colors.pink,
+            child: Row(crossAxisAlignment: ,
+              children: [
+                const SizedBox(width: 8),
+                Expanded(child: buildSlider(context)),
+                const SizedBox(width: 8),
+                Align(alignment: Alignment.bottomRight,
+                  child: GestureDetector(
+                    onTap: widget.onRotateClicked,
+                    child: const Icon(
+                      Icons.fullscreen,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-            ],
+                const SizedBox(width: 8),
+              ],
+            ),
           )
         ],
       ),
@@ -255,30 +273,54 @@ class _PreviewControllerState extends State<_PreviewController> {
         ),
       ),
       child: SizedBox(
-          height: 40,
-          child: PlayerSlider(
-            value: isShow ? sliderPosition : widget.position.toDouble(),
-            min: 0.0,
-            max: widget.duration.toDouble(),
-            divisions: widget.duration > 0 ? widget.duration ~/ 1000 : 1,
-            onChanged: (value) {
-              setState(() => {
-                    sliderPosition = value,
-                  });
-            },
-            onChangeStart: (_) {
-              isShow = true;
-            },
-            onChangeEnd: (_) {
-              isShow = false;
-              setState(() => {});
-              widget.onChangeEnd;
-              widget.onPositionChanged(sliderPosition);
-            },
-            onOffsetChanged: (center, isDragging) {
-              offsetX = center.dx;
-            },
-          )),
+        // child: PlayerSlider(
+        //   value: isShow ? sliderPosition : widget.position.toDouble(),
+        //   min: 0.0,
+        //   max: widget.duration.toDouble(),
+        //   divisions: widget.duration > 0 ? widget.duration ~/ 1000 : 1,
+        //   onChanged: (value) {
+        //     setState(() => {
+        //           sliderPosition = value,
+        //         });
+        //   },
+        //   onChangeStart: (_) {
+        //     isShow = true;
+        //   },
+        //   onChangeEnd: (_) {
+        //     isShow = false;
+        //     setState(() => {});
+        //     widget.onChangeEnd;
+        //     widget.onPositionChanged(sliderPosition);
+        //   },
+        //   onOffsetChanged: (center, isDragging) {
+        //     offsetX = center.dx;
+        //   },
+        // )),
+        child: ProgressBar(
+          progress: isShow
+              ? Duration(milliseconds: sliderPosition.toInt())
+              : Duration(milliseconds: widget.position),
+          total: Duration(milliseconds: widget.duration),
+          buffered: Duration(milliseconds: widget.buffer),
+          onSeek: (duration) {
+            isShow = false;
+            setState(() =>
+                {sliderPosition = duration.inMilliseconds.toDouble()});
+            widget.onChangeEnd;
+            widget.onPositionChanged(sliderPosition);
+          },
+          child: Wrap(
+            children: [
+              Container(
+                color: Colors.grey,
+                width: 160.0,
+                height: 90,
+                child: Image.asset("assets/images/dog.png"),
+              )
+            ],
+          ),
+        ),
+      ),
     );
   }
 
