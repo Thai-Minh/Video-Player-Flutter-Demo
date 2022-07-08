@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:helloworld/custom_progress_bar.dart';
+import 'package:helloworld/custom_preview.dart';
 import 'package:helloworld/preview_loader.dart';
 import 'package:helloworld/utils.dart';
 import 'package:video_player/video_player.dart' as player;
 
-import 'old/player_indicator_shape.dart';
+import 'custom_progressbar.dart';
 
-const double _previewOverloadPadding = 10;
 const double _videoRatio = 16 / 9;
 
 enum ControllerAction { next, previous, play }
@@ -35,8 +34,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
     }
   }
 
-  String get strPosition =>
-      Utils().formatTimeToString(_controller.value.position.inMilliseconds);
+  String get strPosition => Utils().getTimeString(_controller.value.position);
 
   Orientation target = Orientation.portrait;
   double widthScreen = 0.0;
@@ -135,8 +133,8 @@ class _VideoPlayerState extends State<VideoPlayer> {
     setState(() {});
   }
 
-  void _onPositionChanged(double progress) {
-    _setTime(progress.floor().toInt());
+  void _onPositionChanged(int progress) {
+    _setTime(progress.floor());
     setState(() {});
   }
 
@@ -165,7 +163,7 @@ class _PreviewController extends StatefulWidget {
 
   final String strPosition;
 
-  final ValueChanged<double> onPositionChanged;
+  final ValueChanged<int> onPositionChanged;
   final VoidCallback onChangeEnd;
   final VoidCallback onRotateClicked;
 
@@ -173,10 +171,26 @@ class _PreviewController extends StatefulWidget {
   State<_PreviewController> createState() => _PreviewControllerState();
 }
 
-class _PreviewControllerState extends State<_PreviewController> {
-  double sliderPosition = 0.0;
-  bool isShow = false;
-  double offsetX = 0.0;
+class _PreviewControllerState extends State<_PreviewController>
+    with SingleTickerProviderStateMixin {
+  int _sliderPosition = 0;
+  bool _isShow = false;
+
+  late AnimationController _animController;
+
+  @override
+  void initState() {
+    _animController = AnimationController(
+        duration: const Duration(milliseconds: 350), vsync: this);
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,25 +201,22 @@ class _PreviewControllerState extends State<_PreviewController> {
       child: Column(
         children: [
           IgnorePointer(ignoring: true, child: buildOverlay()),
-          Container(color: Colors.pink,
-            child: Row(crossAxisAlignment: ,
-              children: [
-                const SizedBox(width: 8),
-                Expanded(child: buildSlider(context)),
-                const SizedBox(width: 8),
-                Align(alignment: Alignment.bottomRight,
-                  child: GestureDetector(
-                    onTap: widget.onRotateClicked,
-                    child: const Icon(
-                      Icons.fullscreen,
-                      color: Colors.white,
-                      size: 28,
-                    ),
+          Column(
+            children: [
+              Align(
+                alignment: Alignment.bottomRight,
+                child: GestureDetector(
+                  onTap: widget.onRotateClicked,
+                  child: const Icon(
+                    Icons.fullscreen,
+                    color: Colors.white,
+                    size: 28,
                   ),
                 ),
-                const SizedBox(width: 8),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              buildSeekbar(context),
+            ],
           )
         ],
       ),
@@ -213,39 +224,23 @@ class _PreviewControllerState extends State<_PreviewController> {
   }
 
   Widget buildOverlay() {
-    double width = widget.widthScreen * 0.3;
-    double height = width / _videoRatio;
-
-    double dx;
-    if ((offsetX + width / 2) > widget.widthScreen) {
-      dx = widget.widthScreen - width - _previewOverloadPadding;
-    } else if ((offsetX - width / 2) < 0) {
-      dx = _previewOverloadPadding;
-    } else {
-      dx = offsetX - width / 2 + _previewOverloadPadding;
-    }
-
     return FutureBuilder<Image>(
         future: PreviewLoader.loadImage(widget.position),
         builder: (context, snapshot) {
           final image = snapshot.data;
           return AnimatedOpacity(
-              opacity: isShow ? 1.0 : 0.0,
+              opacity: _isShow ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 250),
               child: Flexible(
-                child: Transform.translate(
-                  offset: Offset(dx, 0.0),
-                  child: Container(
-                    alignment: Alignment.centerLeft,
-                    child: Wrap(
+                child: Container(
+                  alignment: Alignment.centerLeft,
+                  child: ProgressPreview(
+                    progress: _sliderPosition / widget.duration,
+                    child: Column(
                       children: [
-                        Column(
-                          children: [
-                            buildPreview(image, width, height),
-                            const SizedBox(height: 6),
-                            buildTime(),
-                          ],
-                        )
+                        buildPreview(image),
+                        const SizedBox(height: 6),
+                        buildTime(),
                       ],
                     ),
                   ),
@@ -254,89 +249,53 @@ class _PreviewControllerState extends State<_PreviewController> {
         });
   }
 
-  Widget buildSlider(BuildContext context) {
-    return SliderTheme(
-      data: SliderTheme.of(context).copyWith(
-        trackShape: const RectangularSliderTrackShape(),
-        activeTrackColor: Colors.blue[700],
-        inactiveTrackColor: Colors.blue[100],
-        trackHeight: 4.0,
-        thumbShape: SliderComponentShape.noOverlay,
-        thumbColor: Colors.blueAccent,
-        overlayColor: Colors.blueAccent,
-        overlayShape: const RoundSliderOverlayShape(overlayRadius: 6.0),
-        tickMarkShape: const RoundSliderTickMarkShape(),
-        activeTickMarkColor: Colors.blue[700],
-        inactiveTickMarkColor: Colors.blue[100],
-        valueIndicatorTextStyle: const TextStyle(
-          color: Colors.white,
-        ),
-      ),
-      child: SizedBox(
-        // child: PlayerSlider(
-        //   value: isShow ? sliderPosition : widget.position.toDouble(),
-        //   min: 0.0,
-        //   max: widget.duration.toDouble(),
-        //   divisions: widget.duration > 0 ? widget.duration ~/ 1000 : 1,
-        //   onChanged: (value) {
-        //     setState(() => {
-        //           sliderPosition = value,
-        //         });
-        //   },
-        //   onChangeStart: (_) {
-        //     isShow = true;
-        //   },
-        //   onChangeEnd: (_) {
-        //     isShow = false;
-        //     setState(() => {});
-        //     widget.onChangeEnd;
-        //     widget.onPositionChanged(sliderPosition);
-        //   },
-        //   onOffsetChanged: (center, isDragging) {
-        //     offsetX = center.dx;
-        //   },
-        // )),
-        child: ProgressBar(
-          progress: isShow
-              ? Duration(milliseconds: sliderPosition.toInt())
-              : Duration(milliseconds: widget.position),
-          total: Duration(milliseconds: widget.duration),
-          buffered: Duration(milliseconds: widget.buffer),
-          onSeek: (duration) {
-            isShow = false;
-            setState(() =>
-                {sliderPosition = duration.inMilliseconds.toDouble()});
-            widget.onChangeEnd;
-            widget.onPositionChanged(sliderPosition);
-          },
-          child: Wrap(
-            children: [
-              Container(
-                color: Colors.grey,
-                width: 160.0,
-                height: 90,
-                child: Image.asset("assets/images/dog.png"),
-              )
-            ],
-          ),
-        ),
-      ),
+  Widget buildSeekbar(BuildContext context) {
+    var progress = _isShow
+        ? Duration(milliseconds: _sliderPosition.toInt())
+        : Duration(milliseconds: widget.position);
+
+    return ProgressBar(
+      animController: _animController,
+      progress: progress,
+      total: Duration(milliseconds: widget.duration),
+      buffered: Duration(milliseconds: widget.buffer),
+      backgroundBarColor: Colors.white.withOpacity(0.24),
+      progressBarColor: Colors.red,
+      bufferedBarColor: Colors.white.withOpacity(0.24),
+      thumbBlurColor: Colors.red,
+      thumbColor: Colors.red,
+      onDragStart: (_) {
+        _isShow = true;
+      },
+      onDragUpdate: (duration) {
+        setState(() => {
+              _sliderPosition = duration.inMilliseconds,
+            });
+      },
+      onSeek: (duration) {
+        _isShow = false;
+        setState(() => {_sliderPosition = duration.inMilliseconds});
+        widget.onChangeEnd;
+        widget.onPositionChanged(_sliderPosition);
+      },
     );
   }
 
-  Widget buildPreview(Image? image, double width, double height) {
+  Widget buildPreview(Image? image) {
+    var width = widget.widthScreen * 0.4;
     return Container(
-      color: Colors.grey,
+      color: Colors.black,
       width: width,
-      height: height,
+      height: width / _videoRatio,
       child: image,
     );
   }
 
   Widget buildTime() {
     return Text(
-      isShow
-          ? Utils().formatTimeToString(sliderPosition.toInt())
+      _isShow
+          ? Utils()
+              .getTimeString(Duration(milliseconds: _sliderPosition.toInt()))
           : widget.strPosition,
       maxLines: 1,
       style: const TextStyle(color: Colors.white),

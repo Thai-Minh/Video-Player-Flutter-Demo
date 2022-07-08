@@ -6,19 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
-typedef ThumbDragStartCallback = void Function(ThumbDragDetails details);
-
-typedef ThumbDragUpdateCallback = void Function(ThumbDragDetails details);
-
 enum ProgressBarShape {
   round,
   square,
 }
 
-class ProgressBar extends SingleChildRenderObjectWidget {
+class ProgressBar extends LeafRenderObjectWidget {
   const ProgressBar({
     Key? key,
-    Widget? child,
+    required this.animController,
     this.progress,
     this.total,
     this.buffered,
@@ -27,16 +23,18 @@ class ProgressBar extends SingleChildRenderObjectWidget {
     this.onDragUpdate,
     this.onDragEnd,
     this.isDrawThumb,
-    this.barHeight = 5.0,
+    this.barHeight = 4.0,
     this.backgroundBarColor,
     this.progressBarColor,
     this.bufferedBarColor,
-    this.progressBarShape = ProgressBarShape.round,
-    this.thumbRadius = 5.0,
+    this.progressBarShape = ProgressBarShape.square,
+    this.thumbRadius = 10.0,
     this.thumbColor,
     this.thumbBlurColor,
     this.thumbScaleRadius = 10.0,
-  }) : super(key: key, child: child);
+  }) : super(key: key);
+
+  final AnimationController animController;
 
   final Duration? progress;
 
@@ -46,9 +44,9 @@ class ProgressBar extends SingleChildRenderObjectWidget {
 
   final ValueChanged<Duration>? onSeek;
 
-  final ThumbDragStartCallback? onDragStart;
+  final ValueChanged<Duration>? onDragStart;
 
-  final ThumbDragUpdateCallback? onDragUpdate;
+  final ValueChanged<Duration>? onDragUpdate;
 
   final VoidCallback? onDragEnd;
 
@@ -77,6 +75,7 @@ class ProgressBar extends SingleChildRenderObjectWidget {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
     return _RenderProgressBar(
+      animController: animController,
       progress: progress ?? Duration.zero,
       total: total ?? Duration.zero,
       buffered: buffered ?? Duration.zero,
@@ -92,8 +91,7 @@ class ProgressBar extends SingleChildRenderObjectWidget {
       progressBarShape: progressBarShape,
       thumbRadius: thumbRadius,
       thumbColor: thumbColor ?? primaryColor,
-      thumbBlurColor:
-          thumbBlurColor ?? (thumbColor ?? primaryColor).withAlpha(80),
+      thumbBlurColor: thumbBlurColor ?? (thumbColor ?? primaryColor),
       thumbScaleRadius: thumbScaleRadius,
     );
   }
@@ -119,36 +117,21 @@ class ProgressBar extends SingleChildRenderObjectWidget {
       ..progressBarShape = progressBarShape
       ..thumbRadius = thumbRadius
       ..thumbColor = thumbColor ?? primaryColor
-      ..thumbBlurColor =
-          thumbBlurColor ?? (thumbColor ?? primaryColor).withAlpha(80);
+      ..thumbBlurColor = thumbBlurColor ?? (thumbColor ?? primaryColor)
+      ..thumbScaleRadius = thumbScaleRadius;
   }
 }
 
-class ThumbDragDetails {
-  const ThumbDragDetails({
-    this.timeStamp = Duration.zero,
-    this.globalPosition = Offset.zero,
-  });
-
-  final Duration timeStamp;
-
-  final Offset globalPosition;
-
-  @override
-  String toString() => '${objectRuntimeType(this, 'ThumbDragDetails')}('
-      'time: $timeStamp, '
-      'global: $globalPosition, ';
-}
-
 class _RenderProgressBar extends RenderBox
-    with RenderObjectWithChildMixin<RenderBox> {
+    with RelayoutWhenSystemFontsChangeMixin {
   _RenderProgressBar({
+    required AnimationController animController,
     required Duration progress,
     required Duration total,
     required Duration buffered,
     ValueChanged<Duration>? onSeek,
-    ThumbDragStartCallback? onDragStart,
-    ThumbDragUpdateCallback? onDragUpdate,
+    ValueChanged<Duration>? onDragStart,
+    ValueChanged<Duration>? onDragUpdate,
     VoidCallback? onDragEnd,
     required bool isDrawThumb,
     required double barHeight,
@@ -177,6 +160,13 @@ class _RenderProgressBar extends RenderBox
         _thumbColor = thumbColor,
         _thumbBlurColor = thumbBlurColor,
         _thumbScaleRadius = thumbScaleRadius {
+    _animController = animController;
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.fastOutSlowIn,
+    );
+
     _drag = HorizontalDragGestureRecognizer()
       ..onStart = _onDragStart
       ..onUpdate = _onDragUpdate
@@ -189,26 +179,27 @@ class _RenderProgressBar extends RenderBox
 
   late double _thumbValue;
 
+  late AnimationController _animController;
+  late Animation<double> _scaleAnimation;
+
   bool _userIsDraggingThumb = false;
 
   void _onDragStart(DragStartDetails details) {
+    _animController.forward();
     _userIsDraggingThumb = true;
     _updateThumbPosition(details.localPosition);
-    onDragStart?.call(ThumbDragDetails(
-      timeStamp: _currentThumbDuration(),
-      globalPosition: details.globalPosition,
-    ));
+    onDragStart?.call(_currentThumbDuration());
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
     _updateThumbPosition(details.localPosition);
-    onDragUpdate?.call(ThumbDragDetails(
-      timeStamp: _currentThumbDuration(),
-      globalPosition: details.globalPosition,
-    ));
+    onDragUpdate?.call(_currentThumbDuration());
   }
 
   void _onDragEnd(DragEndDetails details) {
+    _animController.reverse();
+
+    print("MTHAI: ${_scaleAnimation.value}");
     onDragEnd?.call();
     onSeek?.call(_currentThumbDuration());
     _finishDrag();
@@ -288,20 +279,20 @@ class _RenderProgressBar extends RenderBox
     _onSeek = value;
   }
 
-  ThumbDragStartCallback? get onDragStart => _onDragStartUserCallback;
-  ThumbDragStartCallback? _onDragStartUserCallback;
+  ValueChanged<Duration>? get onDragStart => _onDragStartUserCallback;
+  ValueChanged<Duration>? _onDragStartUserCallback;
 
-  set onDragStart(ThumbDragStartCallback? value) {
+  set onDragStart(ValueChanged<Duration>? value) {
     if (value == _onDragStartUserCallback) {
       return;
     }
     _onDragStartUserCallback = value;
   }
 
-  ThumbDragUpdateCallback? get onDragUpdate => _onDragUpdateUserCallback;
-  ThumbDragUpdateCallback? _onDragUpdateUserCallback;
+  ValueChanged<Duration>? get onDragUpdate => _onDragUpdateUserCallback;
+  ValueChanged<Duration>? _onDragUpdateUserCallback;
 
-  set onDragUpdate(ThumbDragUpdateCallback? value) {
+  set onDragUpdate(ValueChanged<Duration>? value) {
     if (value == _onDragUpdateUserCallback) {
       return;
     }
@@ -408,8 +399,19 @@ class _RenderProgressBar extends RenderBox
     markNeedsLayout();
   }
 
-  // The smallest that this widget would ever want to be.
   static const _minDesiredWidth = 100.0;
+
+  @override
+  void attach(covariant PipelineOwner owner) {
+    _scaleAnimation.addListener(markNeedsPaint);
+    super.attach(owner);
+  }
+
+  @override
+  void detach() {
+    _scaleAnimation.removeListener(markNeedsPaint);
+    super.detach();
+  }
 
   @override
   double computeMinIntrinsicWidth(double height) => _minDesiredWidth;
@@ -436,15 +438,7 @@ class _RenderProgressBar extends RenderBox
 
   @override
   void performLayout() {
-    final child = this.child;
-
-    if (child != null) {
-      child.layout(constraints, parentUsesSize: true);
-      final height = child.size.height + computeDryLayout(constraints).height;
-      size = Size(computeDryLayout(constraints).width, height);
-    } else {
-      size = computeDryLayout(constraints);
-    }
+    size = computeDryLayout(constraints);
   }
 
   @override
@@ -456,13 +450,7 @@ class _RenderProgressBar extends RenderBox
   }
 
   double _calDesiredHeight() {
-    final child = this.child;
-    if (child != null) {
-      final barHeight = max(2 * _thumbRadius, _barHeight);
-      return barHeight + child.size.height;
-    } else {
-      return max(2 * _thumbRadius, _barHeight);
-    }
+    return max(2 * _thumbRadius, _barHeight);
   }
 
   @override
@@ -474,26 +462,15 @@ class _RenderProgressBar extends RenderBox
     canvas.save();
     canvas.translate(offset.dx, offset.dy);
 
-    _drawProgressBarWithoutLabels(canvas, offset.dx);
-
-    _drawGroup(context, canvas, offset);
+    _draw(canvas);
 
     canvas.restore();
   }
 
-  void _drawGroup(PaintingContext context, Canvas canvas, Offset offset) {
-    // print("MTHAI offset $offset");
-    final child = this.child;
-    if (child != null) {
-      context.paintChild(child, Offset(offset.dx, 40));
-    }
-  }
-
-  void _drawProgressBarWithoutLabels(Canvas canvas, double dx) {
+  void _draw(Canvas canvas) {
     final barWidth = size.width;
     final barHeight = 2 * _thumbRadius;
-    _drawProgressBar(
-        canvas, Offset(dx, size.height - barHeight), Size(barWidth, barHeight));
+    _drawProgressBar(canvas, Offset.zero, Size(barWidth, barHeight));
   }
 
   void _drawProgressBar(Canvas canvas, Offset offset, Size localSize) {
@@ -503,6 +480,7 @@ class _RenderProgressBar extends RenderBox
     _drawBufferedBar(canvas, localSize);
     _drawCurrentProgressBar(canvas, localSize);
     _drawThumb(canvas, localSize);
+
     canvas.restore();
   }
 
@@ -525,18 +503,10 @@ class _RenderProgressBar extends RenderBox
   }
 
   void _drawCurrentProgressBar(Canvas canvas, Size localSize) {
-    var widthPercent = 0.0;
-
-    if (_userIsDraggingThumb) {
-      widthPercent = _thumbValue;
-    } else {
-      widthPercent = _percentOfTotal(_progress);
-    }
-
     _drawBar(
       canvas: canvas,
       availableSize: localSize,
-      widthPercent: widthPercent,
+      widthPercent: _percentOfTotal(_progress),
       color: progressBarColor,
     );
   }
@@ -556,8 +526,8 @@ class _RenderProgressBar extends RenderBox
     final capRadius = _barHeight / 2;
     final adjustedWidth = availableSize.width - barHeight;
     final dx = widthPercent * adjustedWidth + capRadius;
-    final startPoint = Offset(capRadius, availableSize.height / 2);
-    var endPoint = Offset(dx, availableSize.height / 2);
+    final startPoint = Offset(capRadius, availableSize.height - _barHeight / 2);
+    var endPoint = Offset(dx, availableSize.height - _barHeight / 2);
     canvas.drawLine(startPoint, endPoint, backgroundBarPaint);
   }
 
@@ -570,12 +540,16 @@ class _RenderProgressBar extends RenderBox
     var thumbDx = (_thumbValue * availableWidth + barCapRadius)
         .clamp(_thumbRadius, localSize.width - _thumbRadius);
 
-    final center = Offset(thumbDx, localSize.height / 2);
+    final center = Offset(thumbDx, localSize.height - _barHeight / 2);
+
     if (_userIsDraggingThumb) {
       final thumbGlowPaint = Paint()..color = thumbBlurColor;
-      canvas.drawCircle(center, thumbScaleRadius, thumbGlowPaint);
+      canvas.drawCircle(center, thumbScaleRadius * _scaleAnimation.value, thumbGlowPaint);
     }
-    canvas.drawCircle(center, thumbRadius, thumbPaint);
+
+    if (_isDrawThumb) {
+      canvas.drawCircle(center, thumbRadius, thumbPaint);
+    }
   }
 
   double _percentOfTotal(Duration duration) {
