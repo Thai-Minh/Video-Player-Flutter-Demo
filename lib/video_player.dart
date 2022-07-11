@@ -5,6 +5,7 @@ import 'package:helloworld/utils.dart';
 import 'package:video_player/video_player.dart' as player;
 
 import 'custom_progressbar.dart';
+import 'main.dart';
 
 const double _videoRatio = 16 / 9;
 
@@ -43,12 +44,18 @@ class _VideoPlayerState extends State<VideoPlayer> {
   void initState() {
     super.initState();
 
-    _controller = player.VideoPlayerController.network(
-      "https://bitmovin-a.akamaihd.net/content/MI201109210084_1/mpds/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.mpd",
-      videoPlayerOptions: player.VideoPlayerOptions(
-        allowBackgroundPlayback: true,
-      ),
-    )..initialize().then((value) => setState(() => {}));
+    // _controller = player.VideoPlayerController.network(
+    //   "https://bitmovin-a.akamaihd.net/content/MI201109210084_1/mpds/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.mpd",
+    //   videoPlayerOptions: player.VideoPlayerOptions(
+    //     allowBackgroundPlayback: true,
+    //   ),
+    // )..initialize().then((value) => setState(() => {}));
+
+    var parentPlayerData = ParentPlayerData.of(context);
+
+    if(parentPlayerData != null) {
+      _controller = parentPlayerData.controller;
+    }
 
     _controller.setLooping(true);
     _controller.addListener(listener);
